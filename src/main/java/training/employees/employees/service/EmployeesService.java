@@ -1,5 +1,7 @@
 package training.employees.employees.service;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,7 @@ import training.employees.employees.repository.EmployeeNotFoundException;
 import training.employees.employees.repository.EmployeesRepository;
 
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +28,17 @@ public class EmployeesService {
 
     private EventStoreGateway eventStoreGateway;
     private EmployeeGateway employeeGateway;
+
+    private MeterRegistry meterRegistry;
+
+    @PostConstruct
+    public void initCounter() {
+        Counter.builder("employees.created")
+                .baseUnit("employees")
+                .description("Number of created employees")
+                .register(meterRegistry);
+
+    }
 
     public List<EmployeeDto> listEmployees(Optional<String> prefix) {
         if (prefix.isEmpty()) {
@@ -45,6 +59,9 @@ public class EmployeesService {
         repository.save(employee);
         eventStoreGateway.sendEvent(String.format("Employee has been created: %s",command.getName()));
         employeeGateway.sendEvent(String.format("Employee has been created: %s", command.getName()));
+
+        meterRegistry.counter("employees.created").increment();
+
         return employeeMapper.toDto(employee);
     }
 
