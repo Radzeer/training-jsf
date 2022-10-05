@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import training.employees.employees.dto.*;
+import training.employees.employees.jmsgateway.EmployeeGateway;
 import training.employees.employees.jmsgateway.EventStoreGateway;
 import training.employees.employees.repository.AddressesRepository;
 import training.employees.employees.repository.EmployeeNotFoundException;
@@ -23,6 +24,7 @@ public class EmployeesService {
     private EmployeeMapper employeeMapper;
 
     private EventStoreGateway eventStoreGateway;
+    private EmployeeGateway employeeGateway;
 
     public List<EmployeeDto> listEmployees(Optional<String> prefix) {
         if (prefix.isEmpty()) {
@@ -42,6 +44,7 @@ public class EmployeesService {
         var employee = employeeMapper.toEntity(command);
         repository.save(employee);
         eventStoreGateway.sendEvent(String.format("Employee has been created: %s",command.getName()));
+        employeeGateway.sendEvent(String.format("Employee has been created: %s", command.getName()));
         return employeeMapper.toDto(employee);
     }
 

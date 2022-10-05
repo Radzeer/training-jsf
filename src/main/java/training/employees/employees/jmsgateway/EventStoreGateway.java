@@ -11,13 +11,14 @@ public class EventStoreGateway {
     private JmsTemplate jmsTemplate;
 
     public void sendEvent(String message){
-        jmsTemplate.convertAndSend("eventsQueue",String.format("""
+        /*jmsTemplate.convertAndSend("eventsQueue",String.format("""
                 {
                     "message": "%s"
                 }
                 """,message),msg -> {
                                         msg.setStringProperty("_typeId", "CreateEventCommand");
                                         return msg;
-                                    });
+                                    });*/
+        jmsTemplate.convertAndSend("eventsQueue",new MessageDto(message));
     }
 }
